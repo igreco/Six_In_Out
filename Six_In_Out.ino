@@ -84,8 +84,8 @@ const unsigned long LONG_INTERVAL = 80;   // Intervallo lungo in ms
 // Questa variabile memorizzerà lo stato corrente dei Checkboxes
 bool statiCheckbox[] = {true, true, true, true, true, true};
 
-const char* ssid = "red-grk";
-const char* password = "f4migliagr3co";
+const char* ssid = "name";
+const char* password = "psw";
 
 WebServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
