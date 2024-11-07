@@ -64,6 +64,8 @@ volatile bool Setting = false;
 volatile bool Fault = true;
 volatile bool ValueFault = false;
 
+volatile bool TimeOut = false;
+
 uint8_t dacValue = 0;
 uint8_t dacValueAnt = 0;
 uint16_t valueADC = 0;
@@ -81,6 +83,11 @@ int samples[NUM_SAMPLES];
 const unsigned long SHORT_INTERVAL = 50;  // Intervallo corto in ms
 const unsigned long LONG_INTERVAL = 80;   // Intervallo lungo in ms
 
+// Costante per il tempo di inattività massimo
+const unsigned long maximunDowntime = 10000;
+unsigned long lastActionTime = 0; // Memorizza il tempo in millisecondi
+                                  // dell'ultima volta che è stato premuto un pulsante
+                                  
 // Questa variabile memorizzerà lo stato corrente dei Checkboxes
 bool statiCheckbox[] = {true, true, true, true, true, true};
 
@@ -264,6 +271,10 @@ void inviaStatoATutti() {
 }
 
 void singleClick1(Button2& btn) {
+  if (TimeOut) {
+    // Reimposta il tempo in millisecondi dell'ultima azione quando si accede alla subroutine
+    lastActionTime = millis();
+  }
   if (Normal) {
     if (Setting) {
       if (dacValue >= 1 && dacValue <= ValueRecupery[1]) {
@@ -292,6 +303,10 @@ void singleClick1(Button2& btn) {
 }  
 
 void singleClick2(Button2& btn) {
+  if (TimeOut) {
+    // Reimposta il tempo in millisecondi dell'ultima azione quando si accede alla subroutine
+    lastActionTime = millis();
+  }
   if (Normal) {
     if (Setting) {
       if (dacValue >= 0 && dacValue <= ValueRecupery[1]-1) {
@@ -306,7 +321,7 @@ void singleClick2(Button2& btn) {
         ValueRecupery[8] = ++dacValue;
       } else if (dacValue >= ValueRecupery[9]+1 && dacValue <= ValueRecupery[11]-1) {
         ValueRecupery[10] = ++dacValue;
-      } else if (dacValue >= ValueRecupery[11]+1 && dacValue <= 255) {
+      } else if (dacValue >= ValueRecupery[11]+1 && dacValue <= 254) {
         ValueRecupery[12] = ++dacValue;
       }
       dacWrite(OUT_DAC, dacValue);  // Invia dacValue all'uscita del DAC
@@ -376,10 +391,13 @@ i nuovi valori nell'array ValueRecupery[].
 */
 
 void longClick1(Button2& btn) {
+  TimeOut = true;
   if (Normal) {
     Setting = !Setting;
     if(!Setting) {
       Scrivere_Valori();
+      TimeOut = false;
+      lastActionTime = 0;
     }
   } else {
     switch(numbers[currentSelection]) {
@@ -411,11 +429,14 @@ void longClick1(Button2& btn) {
     }
     Leggere_Valori();
     Initial = true;
-    Normal = true;    
+    Normal = true;
+    TimeOut = false;
+    lastActionTime = 0;
   }
 }
 
 void longClick2(Button2& btn) {
+  TimeOut = true;
   Normal = false;
 }
 
@@ -579,7 +600,28 @@ void loop() {
     }
     sum = 0;
     Fault = false;
-  }  
+  }
+
+  /*
+  Calcola il tempo trascorso dall'ultima volta 
+  che è stato premuto un pulsante e se supera il massimo, 
+  torna alla modalità NORMAL MODE, 
+  salvando solo le ultime impostazioni effettuate, 
+  senza intervenire sul numero di pin selezionati come ingressi.  
+  */
+  if (TimeOut) {
+    unsigned long currentTime = millis();
+    if (lastActionTime == 0) {
+      lastActionTime = currentTime;
+    }
+    if (currentTime - lastActionTime > maximunDowntime) {
+      Scrivere_Valori();      
+      TimeOut = false;
+      lastActionTime = 0;
+      Normal = true;
+      Setting = false;
+    }
+  }
     
   unsigned long currentMillis = millis();
   static unsigned long previousMillis = 0;
