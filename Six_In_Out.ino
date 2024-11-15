@@ -46,7 +46,7 @@ const int INPUT_4 = 15;
 const int INPUT_5 = 16;
 const int INPUT_6 = 17;
 const int inputPins[] = {INPUT_1, INPUT_2, INPUT_3, INPUT_4, INPUT_5, INPUT_6, KEY_DOWN, KEY_UP};
-const int numPinsFault = sizeof(inputPins) / sizeof(inputPins[0]);
+const int Control_In = sizeof(inputPins) / sizeof(inputPins[0]);
 
 //Definisce i pin utilizzati come output
 const int OUTPUT_1 = 5;
@@ -84,9 +84,10 @@ const unsigned long SHORT_INTERVAL = 50;  // Intervallo corto in ms
 const unsigned long LONG_INTERVAL = 80;   // Intervallo lungo in ms
 
 // Costante per il tempo di inattività massimo
-const unsigned long maximunDowntime = 10000;
-unsigned long lastActionTime = 0; // Memorizza il tempo in millisecondi
-                                  // dell'ultima volta che è stato premuto un pulsante
+const unsigned long maximunDowntime = 60000;
+// Memorizza il tempo in millisecondi
+// dell'ultima volta che è stato premuto un pulsante
+unsigned long lastActionTime = 0;                                  
                                   
 // Questa variabile memorizzerà lo stato corrente dei Checkboxes
 bool statiCheckbox[] = {true, true, true, true, true, true};
@@ -448,7 +449,7 @@ void setup() {
   Serial.begin(115200);
   
   // Inizializza i pin come ingressi GPIO 12, 13, 14, 15, 16, 17, KEY_DOWN e KEY_UP
-  for (int i = 0; i < numPinsFault; i++) {
+  for (int i = 0; i < Control_In; i++) {
     pinMode(inputPins[i], INPUT_PULLUP);
   }
 
@@ -545,7 +546,7 @@ void setup() {
   keyUp.setLongClickDetectedHandler(longClick2); 
 
   // Callback per tutti i Pin ingreso a CHANGE (GPIO 12, 13, 14, 15, 16 e 17)
-  for (int i = 0; i < numPinsFault - 2; i++) {
+  for (int i = 0; i < Control_In - 2; i++) {
     attachInterrupt(inputPins[i], INT_FAULT, CHANGE); // LOW/HIGH/FALLING/RISING/CHANGE
   }
 
@@ -571,7 +572,7 @@ void loop() {
 
   if(Fault) {
     dacValueAnt = dacValue;
-    for (int i = 0; i < numPinsFault; i++) {
+    for (int i = 0; i < Control_In; i++) {
       delay(100);
       // Fare la somma dei pin che sono a livello basso
       if (digitalRead(inputPins[i]) == LOW) {
