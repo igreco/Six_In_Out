@@ -1,5 +1,4 @@
 /*
- * Progetto: Six_In_Out
  * Autore: Italo Greco
  * Licenza: MIT License (vedi LICENSE per i dettagli).
  *
